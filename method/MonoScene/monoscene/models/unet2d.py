@@ -181,6 +181,10 @@ class UNet2D(nn.Module):
         basemodel = torch.hub.load(
             "rwightman/gen-efficientnet-pytorch", basemodel_name, pretrained=True
         )
+        # basemodel = torch.load(
+        #     "/workspace/mnt/storage/shihao/MyCode-02/SSCBench/method/MonoScene/trained_models/tf_efficientnet_b7_ns-1dbc32de.pth",
+        #     map_location='cpu'
+        # )
         print("Done.")
 
         # Remove last layer

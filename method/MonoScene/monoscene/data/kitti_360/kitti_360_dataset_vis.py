@@ -31,12 +31,31 @@ class Kitti360Dataset(Dataset):
         self.T_velo_2_cam = self.get_velo2cam()
         self.cam_k = self.get_cam_k()
         self.scans = []
-        for sequence in sequences:
+        # for sequence in sequences:
+
+        # for sequence in sequences[0]:
+        #     glob_path = os.path.join(
+        #         self.root, "data_2d_raw", sequence, "image_00/data_rect", "*.png"
+        #     )
+        #     for img_path in glob.glob(glob_path):
+        #         self.scans.append({"img_path": img_path, "sequence": sequence})
+
+        # 只装载能被5整除的图片(跳帧)
+        for sequence in sequences[0]:
             glob_path = os.path.join(
                 self.root, "data_2d_raw", sequence, "image_00/data_rect", "*.png"
             )
             for img_path in glob.glob(glob_path):
-                self.scans.append({"img_path": img_path, "sequence": sequence})
+                # 提取图片文件名（例如 '000000.png'）
+                filename = os.path.basename(img_path)
+                # 提取不带扩展名的文件名（例如 '000000'）
+                img_number = os.path.splitext(filename)[0]
+                # 将字符串转换为整数
+                img_number = int(img_number)
+                # 检查图片序号是否能被5整除
+                if img_number % 5 == 0:
+                    self.scans.append({"img_path": img_path, "sequence": sequence})
+
         self.scans = self.scans[:n_scans]
         self.normalize_rgb = transforms.Compose(
             [

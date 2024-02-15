@@ -1,0 +1,52 @@
+#dataset: "NYU" # "kitti", "kitti_360"
+dataset: kitti_360
+ckpt_path: '/workspace/mnt/storage/shihao/MyCode-02/SSCBench/method/MonoScene/trained_models/Monoscene_kitti360.ckpt'
+
+n_relations: 4
+
+enable_log: true
+kitti_root: '/home/duan/data/shl/kitti'
+kitti_preprocess_root: '/home/duan/data/shl/kitti/dataset/preprocess/monoscene'
+kitti_logdir: '/home/duan/shl/Benchmark/MonoScene/logdir/kitti'
+
+kitti_360_root: '/workspace/mnt/storage/shihao/SSCBench-KITTI360'
+kitti_360_preprocess_root: '/workspace/mnt/storage/shihao/SSCBench-KITTI360/preprocess'
+kitti_360_logdir: '/workspace/mnt/storage/shihao/MyCode-02/SSCBench/method/MonoScene/logdir/kitti360'
+kitti_360_sequence: ['2013_05_28_drive_0000_sync', '2013_05_28_drive_0002_sync', '2013_05_28_drive_0003_sync',
+'2013_05_28_drive_0004_sync', '2013_05_28_drive_0005_sync', '2013_05_28_drive_0006_sync', '2013_05_28_drive_0007_sync',
+'2013_05_28_drive_0008_sync', '2013_05_28_drive_0009_sync', '2013_05_28_drive_0010_sync', '2013_05_28_drive_0018_sync']
+
+nuscenes_root: '/'
+nuscenes_preprocess_root: '/preprocess_uni/monoscenes/'
+nuscenes_logdir: '/scratch/xl3136/sscbench/MonoScene/logdir/nuscenes'
+
+waymo_root: '/waymo'
+waymo_preprocess_root: '/preprocess'
+waymo_logdir: '/scratch/xl3136/sscbench/MonoScene/logdir/waymo'
+
+NYU_root: '/path/to/NYU/depthbin'
+NYU_preprocess_root: '/path/to/NYU/preprocess/folder'
+logdir: '/path/to/NYU/logdir'
+
+output_path:  '/workspace/mnt/storage/shihao/Swap/KITTI360/model_infer/SSCBench_MonoScene'
+
+fp_loss: true 
+frustum_size: 8 
+batch_size: 4
+n_gpus: 1
+num_workers_per_gpu: 4
+exp_prefix: "exp"
+run: 1
+lr: 1e-4
+weight_decay: 1e-4 
+
+context_prior: true
+
+relation_loss: true 
+CE_ssc_loss: true
+sem_scal_loss: true
+geo_scal_loss: true
+
+project_1_2: true
+project_1_4: true
+project_1_8: true
