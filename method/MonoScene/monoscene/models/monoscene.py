@@ -11,6 +11,8 @@ import numpy as np
 import torch.nn.functional as F
 from monoscene.models.unet2d import UNet2D
 from torch.optim.lr_scheduler import MultiStepLR
+import os
+import yaml
 
 
 class MonoScene(pl.LightningModule):
@@ -265,6 +267,46 @@ class MonoScene(pl.LightningModule):
         y_true = target.cpu().numpy()
         y_pred = ssc_pred.detach().cpu().numpy()
         y_pred = np.argmax(y_pred, axis=1)
+
+        # 保存y_pred
+        # 获取反映射函数 用于存储为.label标签
+        yaml_path = "/workspace/mnt/storage/shihao/MyCode-02/SSCBench/dataset/configs/kitti360.yaml"
+        inv_remap_lut = self.get_inv_remap_lut_from_yaml(yaml_path)
+        output_path = '/workspace/mnt/storage/shihao/Swap/KITTI360-eval-new/model_infer/SSCBench_MonoScene/kitti_360'
+        write_path = os.path.join(output_path, batch["sequence"][0])
+        filepath = os.path.join(write_path, batch["frame_id"][0] + ".label")
+        os.makedirs(write_path, exist_ok=True)
+        # debug
+        if y_pred[0].size == 0:
+            print("Warning: y_pred[0] is empty.")
+            print('filepath:', filepath)
+            raise Exception("Warning: y_pred[0] is empty.")
+
+        # # 改变形状方便存储为一维文件
+        # pred_to_save = y_pred[0]
+        # # 首先转换为一维数组,然后映射,最后转换为想要的形状 256 256 32
+        # pred_to_save_1d = pred_to_save.reshape(-1).astype(np.uint16)
+        # pred_to_save_1d = inv_remap_lut[pred_to_save_1d].astype(np.uint16)
+
+        pred_to_save = y_pred[0]
+        pred_to_save = np.moveaxis(pred_to_save, [0, 1, 2], [0, 2, 1]).reshape(
+            -1).astype(np.uint16)  # 256*256*32 => 256*32*256 => -1
+        # 从学习标签反映射回class标签
+        pred_to_save = inv_remap_lut[pred_to_save].astype(np.uint16)
+
+        with open(filepath, "wb") as handle:
+            # 保存.label文件
+            pred_to_save.tofile(filepath)
+            # pred_to_save_1d.tofile(filepath)
+            print("wrote to", filepath)
+
+        if os.path.getsize(filepath) == 0:
+            print(f"Warning: Written file {filepath} is empty.")
+            raise Exception(f"Written file {filepath} is empty.")
+            # # debug: 查看y_pred[0]中的类别:
+            # classes = np.unique(y_pred[0])
+            # print("Class:", classes)
+
         metric.add_batch(y_pred, y_true)
 
         self.log(step_type + "/loss", loss.detach(), on_epoch=True, sync_dist=True)
@@ -349,3 +391,32 @@ class MonoScene(pl.LightningModule):
             )
             scheduler = MultiStepLR(optimizer, milestones=[20], gamma=0.1)
             return [optimizer], [scheduler]
+
+    @staticmethod
+    def get_inv_remap_lut_from_yaml(yaml_path):
+        """
+
+        Args:
+            yaml_path: path to dataset config.
+
+        Returns:
+            a map function that mapping learning map to class map.
+        by Hao.
+        """
+        # 读取YAML文件
+        with open(yaml_path, 'r') as file:
+            dataset_config = yaml.safe_load(file)
+
+        # 获取learning_map_inv部分
+        learning_map_inv = dataset_config['learning_map_inv']
+
+        # 获取最大的键值
+        maxkey = max(learning_map_inv.keys())
+
+        # 创建一个足够大的lookup table，以防出现未知标签
+        remap_lut = np.zeros((maxkey + 1), dtype=np.int32)
+
+        # 使用learning_map_inv中的键和值填充lookup table
+        remap_lut[list(learning_map_inv.keys())] = list(learning_map_inv.values())
+
+        return remap_lut
