@@ -225,6 +225,7 @@ class MonoScene(pl.LightningModule):
                 sync_dist=True,
             )
 
+        # 用于计算视锥loss
         if self.fp_loss and step_type != "test":
             frustums_masks = torch.stack(batch["frustums_masks"])
             frustums_class_dists = torch.stack(
